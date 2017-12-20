@@ -1,0 +1,12 @@
+#Sun Nov 26 21:47:45 CET 2017
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814=
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/DEVKITARM_DIR/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/DEVKITARM_DIR/operation=append
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/DEVKITARM_DIR/value=${DEVKITARM}
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/DEVKITPRO_DIR/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/DEVKITPRO_DIR/operation=append
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/DEVKITPRO_DIR/value=${DEVKITPRO}
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/append=true
+environment/project/cdt.managedbuild.config.gnu.exe.release.882288814/appendContributed=true
+indexerId=org.eclipse.cdt.core.fastIndexer
