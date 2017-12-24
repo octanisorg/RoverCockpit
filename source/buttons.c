@@ -10,14 +10,21 @@
 
 button_events_t button_listener(){
 	scanKeys();
+	unsigned down = keysDown();
 	unsigned held = keysHeld();
 
-	if(held & KEY_TOUCH){
+	if(down & KEY_TOUCH){
 		touchPosition touch;
 		touchRead(&touch);
 
 		//TODO: distinguish between sub buttons and fire event
-	}else if(held & KEY_DOWN){
+	}else if(down & KEY_START){
+		return BUTTON_WIFI_CONNECT_EVENT;
+	}else if(down & KEY_A){
+		return BUTTON_ARM_EVENT;
+	}
+
+	if(held & KEY_DOWN){
 		return BUTTON_D_EVENT;
 	}else if(held & KEY_UP){
 		return BUTTON_U_EVENT;
@@ -25,6 +32,9 @@ button_events_t button_listener(){
 		return BUTTON_L_EVENT;
 	}else if(held & KEY_RIGHT){
 		return BUTTON_R_EVENT;
-
+	}else{
+		return BUTTON_NO_EVENT;
 	}
+
+
 }

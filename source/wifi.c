@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <dswifi9.h>
 #include "graphics.h"
+#include "timesync.h"
 
 //Socket port
 #define LOCAL_PORT 4210
@@ -22,20 +23,24 @@
 //Socket i/o configuration
 struct sockaddr_in sa_out, sa_in;
 int socket_id;
-
+uint8 wifiFrameRx[64];
+int frames_received = 0;
 
 // Flags indicating whether the WiFi or the
 // socket has been initialized
 bool socket_opened = false;
 bool wifi_connected = false;
 
+Wifi_AccessPoint * desiredRover;
+Wifi_AccessPoint * foundRover;
+
 int wifi_init(){
 
 	if(wifi_connected) return 0;
 
 	//desired access point to connect to
-	Wifi_AccessPoint * desiredRover =  malloc(sizeof(Wifi_AccessPoint));
-	Wifi_AccessPoint * foundRover = malloc(sizeof(Wifi_AccessPoint));
+	desiredRover =  malloc(sizeof(Wifi_AccessPoint));
+	foundRover = malloc(sizeof(Wifi_AccessPoint));
 
 	strcpy(desiredRover->ssid, SSID);
 	desiredRover->ssid_len = 13;
@@ -43,6 +48,7 @@ int wifi_init(){
 
 
 	Wifi_InitDefault(false);
+
 	int status = ASSOCSTATUS_DISCONNECTED;
 	int inRange = -1;
 
@@ -77,7 +83,6 @@ int wifi_init(){
 			return 1;
 		}
 
-		graphics_updateHUD();
 		status = Wifi_AssocStatus();
 	}
 }
@@ -89,6 +94,7 @@ int wifi_openSocket()
  	if(socket_opened == true)
 		return 0;
 
+ 	frames_received = 0;
  	socket_id = socket(AF_INET,SOCK_DGRAM,0);  //UDP socket
 
  	//-----------Configure receiving side---------------------//
@@ -100,6 +106,7 @@ int wifi_openSocket()
 	if(bind(socket_id, (struct sockaddr*)&sa_in, sizeof(sa_in)) < 0)
 		return 0; //Error binding the socket
 
+	/*
 	//-----------Configure sending side-----------------------//
 
 	sa_out.sin_family = AF_INET;			//Type of address (Inet)
@@ -116,6 +123,8 @@ int wifi_openSocket()
 
 	//Destination address (broadcast)
 	sa_out.sin_addr.s_addr = broadcast_addr;
+	*/
+
 
 	//Set socket to be non-blocking
 	char nonblock = 1;
@@ -138,7 +147,7 @@ void wifi_closeSocket()
 	socket_opened = false;
 }
 
-int wifi_sendData(char* data_buff, int bytes){
+int wifi_sendData(uint8* data_buff, int bytes){
 	//If no socket is opened return (error)
 	if(socket_opened == false)
 		return -1;
@@ -148,14 +157,14 @@ int wifi_sendData(char* data_buff, int bytes){
 			data_buff,	//buffer of data
 			bytes,		//Bytes to send
 			0,			//Flags (none)
-			(struct sockaddr *)&sa_out,	//Output side of the socket
-			sizeof(sa_out));				//Size of the structure
+			(struct sockaddr *)&sa_in,	//Output side of the socket
+			sizeof(sa_in));				//Size of the structure
 
 	//Return always true
 	return 1;
 }
 
-int wifi_receiveData(char* data_buff, int bytes)
+int wifi_receiveData(uint8* data_buff, int bytes)
 {
 	int received_bytes;
 	int info_size = sizeof(sa_in);
@@ -181,3 +190,63 @@ int wifi_receiveData(char* data_buff, int bytes)
 	return received_bytes;
 }
 
+
+void wifi_parseFrame(){
+	int32 values[17];
+
+	int i,j,k;
+	k=0;
+	for(i=0; i<17; i++){
+
+		values[i]=0;
+		for(j=0; j<4; j++){
+			values[i] += wifiFrameRx[j+k] << 8*j;
+		}
+		k=k+4;
+	}
+
+	graphics_hud_setPowerOut((float)values[0]/1000);
+	graphics_hud_setPowerIn((float)values[1]/1000);
+	graphics_hud_setGPS((float)values[2]);
+	graphics_hud_setSats((float)values[3]);
+	graphics_hud_setHdop((float)values[4]);
+	graphics_hud_setPrec((float)values[5]);
+	graphics_hud_setLat((float)values[6]/1e7);
+	graphics_hud_setLon((float)values[7]/1e7);
+	graphics_hud_setIntTemp((float)values[8]/100);
+	graphics_hud_setExtTemp((float)values[9]/100);
+	graphics_hud_setIntHum((float)values[10]/100);
+	graphics_hud_setExtPress((float)values[11]);
+	graphics_hud_setWind((float)values[12]);
+	graphics_hud_setHeading((float)values[13]/100);
+	graphics_hud_setBattery((float)values[15]/1000);
+	graphics_hud_setHealth((float)values[14]);
+
+	timesync_setEpoch((uint32)values[16]);
+
+}
+
+wifi_events_t wifi_listener(){
+	int bytesRx = wifi_receiveData(wifiFrameRx,68);
+	if(bytesRx == 68){
+		wifi_parseFrame();
+		frames_received++;
+		return WIFI_FRAMERX_EVENT;
+	}else{
+		return WIFI_RX_EVENT;
+	}
+}
+
+int wifi_getRxFrameCount(){
+	return frames_received;
+}
+
+void wifi_disconnect(){
+	if(wifi_connected){
+		wifi_closeSocket();
+		Wifi_DisconnectAP();
+		wifi_connected = false;
+		free(foundRover);
+		free(desiredRover);
+	}
+}

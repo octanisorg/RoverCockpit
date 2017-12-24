@@ -14,17 +14,29 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+
+typedef enum {
+	WIFI_RX_EVENT,
+	WIFI_FRAMERX_EVENT
+} wifi_events_t;
+
+
 //WiFi initialization
 int wifi_init();
 //Socket initialization
 int wifi_openSocket();
 //Receive data trough the socket
-int wifi_receiveData(char* data_buff, int bytes);
+int wifi_receiveData(uint8* data_buff, int bytes);
 //Send data through the socket
-int wifi_sendData(char* data_buff, int bytes);
+int wifi_sendData(uint8* data_buff, int bytes);
 //Close the Socket
 void wifi_closeSocket();
 
+void wifi_disconnect();
 
+//produces events
+wifi_events_t wifi_listener();
+
+int wifi_getRxFrameCount();
 
 #endif /* WIFI_H_ */
