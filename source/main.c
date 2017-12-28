@@ -2,9 +2,11 @@
 #include <stdio.h>
 
 
+
 #include "scientifica16.h"
 #include "nintendo8.h"
 #include "mainHUD.h"
+#include "Background.h"
 
 
 
@@ -68,11 +70,23 @@ int main(void) {
 	}
 */
 
+	//initialize background of the sub engine:
+
+	VRAM_C_CR = VRAM_ENABLE	| VRAM_C_SUB_BG;
+	REG_DISPCNT_SUB = MODE_5_2D | DISPLAY_BG0_ACTIVE;
+
+	BGCTRL_SUB[0] = BG_32x32 | BG_COLOR_256 | BG_MAP_BASE(0) | BG_TILE_BASE(1);
+
+	swiCopy(BackgroundTiles,BG_TILE_RAM_SUB(1), BackgroundTilesLen/2);
+    swiCopy(BackgroundPal, BG_PALETTE_SUB, BackgroundPalLen/2);
+    swiCopy(BackgroundMap, BG_MAP_RAM_SUB(0), BackgroundMapLen/2);
+
 
 
 	while(1) {
 		swiWaitForVBlank();
 	}
-
 	return 0;
 }
+
+
