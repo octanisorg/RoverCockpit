@@ -56,6 +56,7 @@ void graphics_printDebug2(char * word);
 void graphics_hud_setWifiStatus(int status);
 void graphics_updateHUD();
 void graphics_mainInit();
+void graphics_subInit();
 
 
 

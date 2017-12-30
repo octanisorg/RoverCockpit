@@ -10,6 +10,8 @@
 #include "soundeff.h"
 #include "timesync.h"
 
+
+
 typedef enum {
 	ARMED_STATE,
 	DISARMED_STATE,
@@ -62,10 +64,8 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 
 		case BUTTON_NO_EVENT:
 		break;
-
 	}
 }
-
 
 
 //---------------------------------------------------------------------------------
@@ -74,6 +74,7 @@ int main(void) {
 	timesync_init();
 	soundeff_init();
 	graphics_mainInit();
+	graphics_subInit();
 
 
 	main_states_t state = DISCONNECTED_STATE;
@@ -112,7 +113,6 @@ int main(void) {
 				graphics_hud_setWifiStatus(0);
 			break;
 
-
 			case CONNECT_WIFI_STATE:
 				//search for rover and connect, otherwise block!
 				graphics_printDebug("CONNECTING");
@@ -124,6 +124,7 @@ int main(void) {
 		}
 
 	}
-
 	return 0;
 }
+
+

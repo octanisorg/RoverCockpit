@@ -14,6 +14,8 @@
 #include "mainHUD.h"
 #include "AH.h"
 #include "compassSprite.h"
+#include "Background.h"
+
 
 
 #define NEXTLINE 32
@@ -196,6 +198,18 @@ void graphics_mainInit(){
 		//Update the sprites
 		oamUpdate(&oamMain);
 
+}
+
+void graphics_subInit(){
+
+	VRAM_C_CR = VRAM_ENABLE	| VRAM_C_SUB_BG;
+	REG_DISPCNT_SUB = MODE_5_2D | DISPLAY_BG0_ACTIVE;
+
+	BGCTRL_SUB[0] = BG_32x32 | BG_COLOR_256 | BG_MAP_BASE(0) | BG_TILE_BASE(1);
+
+	swiCopy(BackgroundTiles,BG_TILE_RAM_SUB(1), BackgroundTilesLen/2);
+    swiCopy(BackgroundPal, BG_PALETTE_SUB, BackgroundPalLen/2);
+    swiCopy(BackgroundMap, BG_MAP_RAM_SUB(0), BackgroundMapLen/2);
 }
 
 
