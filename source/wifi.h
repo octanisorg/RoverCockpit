@@ -13,6 +13,10 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <fat.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 
 typedef enum {
@@ -38,5 +42,7 @@ void wifi_disconnect();
 wifi_events_t wifi_listener();
 
 int wifi_getRxFrameCount();
+
+void wifi_dumpParsedFramesToLog();
 
 #endif /* WIFI_H_ */
