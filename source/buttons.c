@@ -22,7 +22,10 @@ button_events_t button_listener(){
 		return BUTTON_WIFI_CONNECT_EVENT;
 	}else if(down & KEY_A){
 		return BUTTON_ARM_EVENT;
+	}else if(down & KEY_SELECT){
+		return BUTTON_SAVE_EVENT;
 	}
+
 
 	if(held & KEY_DOWN){
 		return BUTTON_D_EVENT;

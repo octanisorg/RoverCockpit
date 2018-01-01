@@ -8,10 +8,6 @@
 
 
 #include "wifi.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <dswifi9.h>
 #include "graphics.h"
 #include "timesync.h"
 
@@ -20,9 +16,34 @@
 #define OUT_PORT 4210
 #define SSID "UDP_to_serial"
 
+
 //Socket i/o configuration
 struct sockaddr_in sa_out, sa_in;
 int socket_id;
+
+
+typedef struct wifiParsedFrame{
+    float powerOut;
+    float powerIn;
+    float gps;
+    float sats;
+    float hdop;
+    float prec;
+    float lat;
+    float lon;
+    float intTemp;
+    float extTemp;
+    float intHum;
+    float extPress;
+    float wind;
+    float heading;
+    float battery;
+    float health;
+    uint32 epoch;
+    struct wifiParsedFrame* next;
+} wifiParsedFrame_t;
+
+
 uint8 wifiFrameRx[64];
 int frames_received = 0;
 
@@ -34,9 +55,47 @@ bool wifi_connected = false;
 Wifi_AccessPoint * desiredRover;
 Wifi_AccessPoint * foundRover;
 
+//linked list head
+wifiParsedFrame_t * head = NULL;
+
+wifiParsedFrame_t * wifi_addToList(wifiParsedFrame_t * frame, wifiParsedFrame_t * next){
+	wifiParsedFrame_t* new_node = (wifiParsedFrame_t*)malloc(sizeof(wifiParsedFrame_t));
+	if(new_node == NULL)
+	{
+		printf("Error creating a new node.\n");
+		exit(0);
+	}
+	new_node = frame;
+	new_node->next = next;
+
+	return new_node;
+}
+
+
+void wifi_dumpParsedFramesToLog(){
+
+	FILE * f = fopen("/rxlog.txt", "w+");
+
+	//iterate through linked list
+	wifiParsedFrame_t * node = head;
+	int i = 0;
+	while(i<3){
+		fprintf(f, "e: %i", node->epoch);
+		swiWaitForVBlank();
+		node = node->next;
+		i++;
+	}
+
+	fclose(f);
+}
+
+
 int wifi_init(){
 
 	if(wifi_connected) return 0;
+
+	//init fat for logging
+	fatInitDefault();
 
 	//desired access point to connect to
 	desiredRover =  malloc(sizeof(Wifi_AccessPoint));
@@ -204,6 +263,12 @@ void wifi_parseFrame(){
 		}
 		k=k+4;
 	}
+
+	//add frame to linked list
+	wifiParsedFrame_t * frame;
+	frame->epoch = (uint32)values[16];
+
+	head = wifi_addToList(frame, head);
 
 	graphics_hud_setPowerOut((float)values[0]/1000);
 	graphics_hud_setPowerIn((float)values[1]/1000);

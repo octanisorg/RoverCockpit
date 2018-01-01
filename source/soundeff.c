@@ -10,7 +10,21 @@
 #include "soundbank.h"
 #include "soundbank_bin.h"
 #include "soundeff.h"
+#include "timesync.h"
 
+#define SOUNDEFF_LIMIT_SEC 5
+
+uint32 lastPlayed = 0;
+
+//limit rate of sound effects
+int isPlayable(){
+	if((timesync_getEpoch() - lastPlayed) < SOUNDEFF_LIMIT_SEC){
+		return 0;
+	}else{
+		lastPlayed = timesync_getEpoch();
+		return 1;
+	}
+}
 
 void soundeff_init(){
 
@@ -20,23 +34,25 @@ void soundeff_init(){
 	mmLoadEffect(SFX_CHIMEHIGH);
 	mmLoadEffect(SFX_CHIMELOW);
 	mmLoadEffect(SFX_CHIME2);
-
+	isPlayable();
 }
 
 void soundeff_batteryLow(){
-	//TODO: time limit alerts!
-	//mmEffect(SFX_TOOLOW);
+	if(isPlayable()) mmEffect(SFX_TOOLOW);
 }
 
 void soundeff_stateArmed(){
-	mmEffect(SFX_CHIMEHIGH);
+	if(isPlayable()) mmEffect(SFX_CHIMEHIGH);
 }
 
 void soundeff_stateDisarmed(){
-	mmEffect(SFX_CHIMELOW);
+	if(isPlayable()) mmEffect(SFX_CHIMELOW);
 }
 
 void soundeff_wifiConnected(){
-	mmEffect(SFX_CHIME2);
+	if(isPlayable()) mmEffect(SFX_CHIME2);
 }
 
+void soundeff_wifiFramesSaved(){
+	mmEffect(SFX_CHIME2);
+}

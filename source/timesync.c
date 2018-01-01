@@ -15,7 +15,13 @@ uint32 rover_epoch = 0;
 
 void timesync_tick(){
 	rover_epoch++;
+	//print time
+	uint32 t = timesync_getEpoch();
+	struct tm * tt = gmtime(&t);
+	char buffer[80];
 
+	strftime(buffer,80,"%Y-%m-%dT%H:%M:%S UTC", tt);
+	graphics_printDebug2(buffer);
 }
 
 void timesync_init(){

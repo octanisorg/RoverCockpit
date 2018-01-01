@@ -45,7 +45,10 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 		break;
 
 		case BUTTON_SAVE_EVENT:
-			//save
+			if(*state == ARMED_STATE || *state == DISARMED_STATE){
+				wifi_dumpParsedFramesToLog();
+				soundeff_wifiFramesSaved();
+			}
 		break;
 
 		case BUTTON_L_EVENT:
@@ -73,6 +76,7 @@ int main(void) {
 	graphics_mainInit();
 	graphics_subInit();
 
+
 	main_states_t state = DISCONNECTED_STATE;
 	button_events_t button_events;
 	wifi_events_t wifi_events;
@@ -88,6 +92,7 @@ int main(void) {
 		if(wifi_events == WIFI_FRAMERX_EVENT){
 			graphics_updateHUD();
 		}
+
 
 
 		switch(state) {

@@ -12,6 +12,7 @@ void soundeff_batteryLow();
 void soundeff_stateArmed();
 void soundeff_stateDisarmed();
 void soundeff_wifiConnected();
+void soundeff_wifiFramesSaved();
 
 void soundeff_init();
 

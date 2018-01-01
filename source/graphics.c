@@ -302,13 +302,7 @@ void graphics_updateHUD(){
 	graphics_printFloat(NDSCONN + 2*NEXTLINE, 8,24, "%3.0f");
 
 
-	//print time
-	uint32 t = timesync_getEpoch();
-	struct tm * tt = gmtime(&t);
-	char buffer[80];
 
-	strftime(buffer,80,"%Y-%m-%dT%H:%M:%S UTC", tt);
-	graphics_printDebug2(buffer);
 
 
 	//rotate compass
