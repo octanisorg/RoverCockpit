@@ -36,6 +36,7 @@
 #define LON (LAT + NEXTLINE)
 #define HEADING (13*NEXTLINE + 18)
 #define DEBUGMSG 4*NEXTLINE + 9
+#define FIRTST_BUT_POS 7*NEXTLINE +18
 #define NDSCONN 19*NEXTLINE + 27
 
 #define BATTERY 15*NEXTLINE + 27
@@ -48,16 +49,35 @@
 
 hudData_t hudData;
 u16 * map = BG_MAP_RAM(26);
+u16 * map_SUB = BG_MAP_RAM_SUB(26);
 u16 * compassSprite;
+
+
 
 void graphics_printChar(int index, u16 c){
 	map[index] = c; //16 bit CHAR!!!!!!! otherwise color will be truncated!!!!
 }
+
+void graphics_printChar_SUB(int index, u16 c){
+	map_SUB[index] = c+WHITE_OFFSET; //16 bit CHAR!!!!!!! otherwise color will be truncated!!!!
+}
+
+
 void graphics_print(int index, char * word ){
 
 	int l = 0;
 	while(*(word+l) != '\0'){
 		graphics_printChar(index+l, *(word+l));
+		l++;
+	}
+
+}
+
+void graphics_print_SUB(int index, char * word ){
+
+	int l = 0;
+	while(*(word+l) != '\0'){
+		graphics_printChar_SUB(index+l, *(word+l));
 		l++;
 	}
 
@@ -203,13 +223,21 @@ void graphics_mainInit(){
 void graphics_subInit(){
 
 	VRAM_C_CR = VRAM_ENABLE	| VRAM_C_SUB_BG;
-	REG_DISPCNT_SUB = MODE_5_2D | DISPLAY_BG0_ACTIVE;
+	REG_DISPCNT_SUB = MODE_5_2D | DISPLAY_BG0_ACTIVE | DISPLAY_BG1_ACTIVE;
 
-	BGCTRL_SUB[0] = BG_32x32 | BG_COLOR_256 | BG_MAP_BASE(0) | BG_TILE_BASE(1);
+	BGCTRL_SUB[1] = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(0) | BG_TILE_BASE(1);
+	BGCTRL_SUB[0] = BG_32x32 | BG_COLOR_16 | BG_MAP_BASE(26) | BG_TILE_BASE(2);
+
 
 	swiCopy(BackgroundTiles,BG_TILE_RAM_SUB(1), BackgroundTilesLen/2);
-    swiCopy(BackgroundPal, BG_PALETTE_SUB, BackgroundPalLen/2);
+    swiCopy(CGA8x8thickPal, BG_PALETTE_SUB, CGA8x8thickPalLen/2);
+    swiCopy(CGA8x8thickTiles,BG_TILE_RAM_SUB(2), CGA8x8thickTilesLen/2);
     swiCopy(BackgroundMap, BG_MAP_RAM_SUB(0), BackgroundMapLen/2);
+
+	//clear map of sub screen
+    int i;
+	for(i=0; i<1024; i++) map_SUB[i] = 0;
+
 }
 
 
@@ -228,9 +256,16 @@ void graphics_printFloat(int index, float f, char unit, char * format){
 
 void graphics_printDebug(char * word){
 	int i;
-	for(i=0; i<24; i++) map[DEBUGMSG + i] = 0; //clear line
+	for(i=0; i<24; i++) map[DEBUGMSG + i] = 0; //clear line;
 	graphics_print(DEBUGMSG, word);
-}
+	}
+
+void graphics_printDebug_SUB(char * word, int button){
+	int i;
+	for(i=0; i<24; i++) map_SUB[FIRTST_BUT_POS + i] = 0; //clear line
+	graphics_print_SUB(FIRTST_BUT_POS,word);
+
+	}
 
 void graphics_printDebug2(char * word){
 	int i;
