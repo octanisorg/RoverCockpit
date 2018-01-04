@@ -109,7 +109,7 @@ int main(void) {
 			case DISCONNECTED_STATE:
 				//TODO: graphics_sub_arrow(button_events)
 				graphics_printDebug("DISCONNECTED");
-				graphics_printDebug_SUB("DISCONNECTED",2);
+				graphics_printDebug_SUB("DISCONNECTED",1);
 				wifi_disconnect();
 				graphics_hud_setWifiStatus(0);
 			break;

@@ -262,8 +262,10 @@ void graphics_printDebug(char * word){
 
 void graphics_printDebug_SUB(char * word, int button){
 	int i;
-	for(i=0; i<24; i++) map_SUB[FIRTST_BUT_POS + i] = 0; //clear line
-	graphics_print_SUB(FIRTST_BUT_POS,word);
+	int position;
+	position=FIRTST_BUT_POS+5*button*NEXTLINE;
+	for(i=0; i<24; i++) map_SUB[position + i] = 0; //clear line
+	graphics_print_SUB(position,word);
 
 	}
 
