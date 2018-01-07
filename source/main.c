@@ -20,6 +20,7 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 			if(*state == DISARMED_STATE){
 				*state = ARMED_STATE;
 				soundeff_stateArmed();
+				button_touch_update(BUTTON_ARM_EVENT);
 			}else if(*state == ARMED_STATE){
 				*state = DISARMED_STATE;
 				soundeff_stateDisarmed();
@@ -30,6 +31,7 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 		case BUTTON_WIFI_CONNECT_EVENT:
 			if(*state == DISCONNECTED_STATE){
 				*state = CONNECT_WIFI_STATE;
+				button_touch_update(BUTTON_WIFI_CONNECT_EVENT);
 			}else if(*state == ARMED_STATE || *state == DISARMED_STATE){
 				*state = DISCONNECTED_STATE;
 			}
@@ -37,6 +39,7 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 
 		case BUTTON_SAVE_EVENT:
 			if(*state == ARMED_STATE || *state == DISARMED_STATE){
+				button_touch_update(BUTTON_SAVE_EVENT);
 				wifi_dumpParsedFramesToLog();
 				soundeff_wifiFramesSaved();
 			}
@@ -113,7 +116,7 @@ int main(void) {
 				wifi_init();
 				wifi_openSocket();
 				soundeff_wifiConnected();
-				graphics_printDebug_SUB("CONNECTED", 1);///change position!!!!!!!!!!!!!!
+				graphics_printDebug_SUB("CONNECTED", 1);
 				state = DISARMED_STATE;
 			break;
 		}
