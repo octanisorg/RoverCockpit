@@ -15,6 +15,7 @@
 #include "AH.h"
 #include "compassSprite.h"
 #include "Background.h"
+#include "buttons.h"
 
 
 
@@ -36,7 +37,19 @@
 #define LON (LAT + NEXTLINE)
 #define HEADING (13*NEXTLINE + 18)
 #define DEBUGMSG 4*NEXTLINE + 9
-#define FIRTST_BUT_POS 7*NEXTLINE +18
+#define FIRTST_BUT_POS 7*NEXTLINE +19
+
+#define ARROW_CENTER 12*NEXTLINE+9
+#define RHOMBUS 4
+#define HORIZONTAL_LINE '-'
+#define VERTICAL_LINE '|'
+#define	ARROW_UP 30
+#define ARROW_DOWN 31
+#define ARROW_RIGHT 16
+#define ARROW_LEFT 17
+
+
+
 #define NDSCONN 19*NEXTLINE + 27
 
 #define BATTERY 15*NEXTLINE + 27
@@ -238,6 +251,9 @@ void graphics_subInit(){
     int i;
 	for(i=0; i<1024; i++) map_SUB[i] = 0;
 
+	//initialise the touchscreen button states and text
+	button_touch_init();
+
 }
 
 
@@ -261,19 +277,21 @@ void graphics_printDebug(char * word){
 	}
 
 void graphics_printDebug_SUB(char * word, int button){
-	int i;
-	int position;
-	position=FIRTST_BUT_POS+5*button*NEXTLINE;
-	for(i=0; i<24; i++) map_SUB[position + i] = 0; //clear line
-	graphics_print_SUB(position,word);
-
+	if (0<= button && button<3){
+		int i;
+		int position;
+		position=FIRTST_BUT_POS+5*button*NEXTLINE;
+		for(i=0; i<10; i++) map_SUB[position + i] = 0; //clear line
+		graphics_print_SUB(position,word);
 	}
+}
 
 void graphics_printDebug2(char * word){
 	int i;
 	for(i=0; i<24; i++) map[DEBUGMSG + NEXTLINE + i] = 0; //clear line
 	graphics_print(DEBUGMSG + NEXTLINE, word);
 }
+
 
 
 void graphics_updateHUD(){
@@ -315,7 +333,40 @@ void graphics_updateHUD(){
 
 	//emit warning sounds
 	if(hudData.battery <= 3.4) soundeff_batteryLow();
-
 }
 
+void graphics_draw_arrows(int length_x,int length_y){
+	int i;
+	map_SUB[ARROW_CENTER]=RHOMBUS+RED_OFFSET;
+
+
+	if(length_x>0){
+		for(i=1;i<length_x;i++){
+			map_SUB[ARROW_CENTER+i]=HORIZONTAL_LINE+RED_OFFSET;
+			}
+		map_SUB[ARROW_CENTER+i]=ARROW_RIGHT+RED_OFFSET;
+	}
+	else if(length_x<0){
+		for(i=1;i<(-length_x);i++){
+					map_SUB[ARROW_CENTER-i]=HORIZONTAL_LINE+RED_OFFSET;
+					}
+		map_SUB[ARROW_CENTER-i]=ARROW_LEFT+RED_OFFSET;
+	}
+
+
+	if(length_y>0){
+		for(i=1;i<length_y;i++){
+			map_SUB[ARROW_CENTER-i*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
+			}
+		map_SUB[ARROW_CENTER-i*NEXTLINE]=ARROW_UP+RED_OFFSET;
+	}
+	else if(length_y<0){
+		for(i=1;i<(-length_y);i++){
+					map_SUB[ARROW_CENTER+i*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
+					}
+		map_SUB[ARROW_CENTER+i*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
+	}
+
+
+}
 

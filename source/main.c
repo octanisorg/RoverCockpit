@@ -10,16 +10,7 @@
 #include "soundeff.h"
 #include "timesync.h"
 
-
-
-typedef enum {
-	ARMED_STATE,
-	DISARMED_STATE,
-	CONNECT_WIFI_STATE,
-	DISCONNECTED_STATE
-} main_states_t;
-
-
+#include "states.h"
 
 void handle_button_events(button_events_t button_events, main_states_t * state){
 
@@ -77,7 +68,7 @@ int main(void) {
 	graphics_subInit();
 
 
-	main_states_t state = DISCONNECTED_STATE;
+	main_states_t state = DISARMED_STATE;
 	button_events_t button_events;
 	wifi_events_t wifi_events;
 
@@ -86,6 +77,8 @@ int main(void) {
 		swiWaitForVBlank();
 		button_events = button_listener();
 		wifi_events = wifi_listener();
+
+
 
 		handle_button_events(button_events, &state);
 
@@ -103,23 +96,24 @@ int main(void) {
 			case DISARMED_STATE:
 				//TODO: graphics_sub_arrow(button_events)
 				graphics_printDebug("DISARMED");
+				graphics_draw_arrows(-3,-6);
 			break;
 
 
 			case DISCONNECTED_STATE:
 				//TODO: graphics_sub_arrow(button_events)
-				graphics_printDebug("DISCONNECTED");
-				graphics_printDebug_SUB("DISCONNECTED",1);
+				graphics_printDebug("DISCONNECTED"); ///////////////////////Why calling in loop????
+				graphics_draw_arrows(-3,-6);
 				wifi_disconnect();
 				graphics_hud_setWifiStatus(0);
 			break;
 
 			case CONNECT_WIFI_STATE:
 				//search for rover and connect, otherwise block!
-				graphics_printDebug("CONNECTING");
 				wifi_init();
 				wifi_openSocket();
 				soundeff_wifiConnected();
+				graphics_printDebug_SUB("CONNECTED", 1);///change position!!!!!!!!!!!!!!
 				state = DISARMED_STATE;
 			break;
 		}
