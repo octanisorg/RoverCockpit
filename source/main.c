@@ -26,17 +26,16 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 				soundeff_stateDisarmed();
 				button_touch_update(BUTTON_ARM_EVENT);
 			}
-
 		break;
-
 		case BUTTON_WIFI_CONNECT_EVENT:
+
 			if(*state == DISCONNECTED_STATE){
 				*state = CONNECT_WIFI_STATE;
 				button_touch_update(BUTTON_WIFI_CONNECT_EVENT);
 			}else if(*state == ARMED_STATE || *state == DISARMED_STATE){
 				*state = DISCONNECTED_STATE;
 				button_touch_update(BUTTON_WIFI_CONNECT_EVENT);
-			}
+				}
 		break;
 
 		case BUTTON_SAVE_EVENT:
@@ -103,7 +102,6 @@ int main(void) {
 			case DISARMED_STATE:
 				graphics_printDebug("DISARMED");
 			break;
-
 
 			case DISCONNECTED_STATE:
 				graphics_printDebug("DISCONNECTED");

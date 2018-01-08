@@ -62,5 +62,4 @@ void graphics_mainInit();
 void graphics_subInit();
 void graphics_draw_arrows(button_events_t button_event);
 
-
 #endif /* GRAPHICS_H_ */

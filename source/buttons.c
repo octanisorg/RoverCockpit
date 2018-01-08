@@ -110,12 +110,15 @@ void button_touch_update(button_events_t button_events){
 		}
 		break;
 	case BUTTON_WIFI_CONNECT_EVENT:
-		if(button1_state==CONNECT_TOUCH_BUTTON_STATE){
+		if(button2_state==CONNECT_TOUCH_BUTTON_STATE){
 			button2_state=DISCONNECT_TOUCH_BUTTON_STATE;
 			graphics_printDebug_SUB("DISCONNECT", TOUCH_BUTTON2);
-		}else if(button1_state==DISCONNECT_TOUCH_BUTTON_STATE){
+		}else if(button2_state==DISCONNECT_TOUCH_BUTTON_STATE){
 			button2_state=CONNECT_TOUCH_BUTTON_STATE;
 			graphics_printDebug_SUB("CONNECT", TOUCH_BUTTON2);
+
+			button1_state=ARM_TOUCH_BUTTON_STATE;
+			graphics_printDebug_SUB("ARM", TOUCH_BUTTON1);
 		}
 		break;
 	default: break;

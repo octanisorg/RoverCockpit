@@ -385,7 +385,7 @@ void graphics_draw_arrows(button_events_t button_event){
 		}
 		break;
 	case BUTTON_D_EVENT:
-		if(arrow_y_length>-11){
+		//if(arrow_y_length>-11){
 			arrow_y_length--;
 			if(arrow_y_length>0){
 				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
@@ -397,10 +397,9 @@ void graphics_draw_arrows(button_events_t button_event){
 			}else if(arrow_y_length==0){
 				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
 			}
-		}
+		//}
 	default: break;
 	}
 
 	map_SUB[ARROW_CENTER]=RHOMBUS+RED_OFFSET;
 }
-
