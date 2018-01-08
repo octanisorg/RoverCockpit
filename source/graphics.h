@@ -13,6 +13,7 @@
 #include <string.h>
 #include "math.h"
 #include "soundeff.h"
+#include "buttons.h"
 
 typedef struct{
     float power_in;
@@ -51,6 +52,7 @@ void graphics_hud_setHealth(float f);
 void graphics_hud_setIntHum(float f);
 
 void graphics_printDebug(char * word);
+//button=0,1,2:
 void graphics_printDebug_SUB(char * word, int button);
 void graphics_printDebug2(char * word);
 
@@ -58,7 +60,6 @@ void graphics_hud_setWifiStatus(int status);
 void graphics_updateHUD();
 void graphics_mainInit();
 void graphics_subInit();
-
-
+void graphics_draw_arrows(button_events_t button_event);
 
 #endif /* GRAPHICS_H_ */

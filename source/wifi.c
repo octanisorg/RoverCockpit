@@ -6,17 +6,15 @@
  */
 
 
-
 #include "wifi.h"
-#include "graphics.h"
-#include "timesync.h"
 
 //Socket port
 #define LOCAL_PORT 4210
 #define OUT_PORT 4210
 #define SSID "UDP_to_serial"
 #define SSID_CHANNEL 1
-#define UDP_FRAME_SIZE 64
+#define UDP_RXFRAME_SIZE 64
+#define UDP_TXFRAME_SIZE 2
 //number of 4 byte values in an RX frame
 #define VALUES_IN_FRAME 17 
 
@@ -52,7 +50,7 @@ typedef struct wifiParsedFrame{
 } wifiParsedFrame_t;
 
 
-uint8 wifiFrameRx[UDP_FRAME_SIZE];
+uint8 wifiFrameRx[UDP_RXFRAME_SIZE];
 int frames_received = 0;
 int bytes_sent = 0;
 
@@ -123,11 +121,14 @@ void wifi_dumpParsedFramesToLog(){
 
 
 int wifi_init(){
+  //wifi connect source code from ndsscan and miniwifi (D.Atienza) lib
 
   if(wifi_connected) return 0;
 
   //init fat for logging
   fatInitDefault();
+  Wifi_InitDefault(false);
+
 
   //desired access point to connect to
   desiredRover =  malloc(sizeof(Wifi_AccessPoint));
@@ -137,8 +138,6 @@ int wifi_init(){
   desiredRover->ssid_len = strlen(SSID);
   desiredRover->channel = SSID_CHANNEL;
 
-
-  Wifi_InitDefault(false);
 
   int status = ASSOCSTATUS_DISCONNECTED;
   int inRange = -1;
@@ -337,6 +336,40 @@ wifi_events_t wifi_listener(){
     return WIFI_RX_EVENT;
   }
 }
+
+
+void wifi_sendDriveInput(button_events_t button_event){
+  const int8 maxX = 11;
+  const int8 maxY = 8;
+  static int8 x = 0;
+  static int8 y = 0;
+
+  switch(button_event)
+    {
+    case BUTTON_D_EVENT:
+      if(abs(x) <= maxX) x++;
+      break;
+    case BUTTON_U_EVENT:
+      if(abs(x) <= maxX) x--;
+      break;
+    case BUTTON_R_EVENT:
+      if(abs(y) <= maxY) y++;
+      break;
+    case BUTTON_L_EVENT:
+      if(abs(y) <= maxY) y--;
+      break;
+    default:
+      return;
+      break;
+    }
+
+  uint8 txPacket[UDP_TXFRAME_SIZE - 1];
+  txPacket[0] = (uint8)x;
+  txPacket[1] = (uint8)y;
+  wifi_sendData(txPacket, UDP_TXFRAME_SIZE);
+}
+
+
 
 int wifi_getRxFrameCount(){
   return frames_received;

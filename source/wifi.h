@@ -17,7 +17,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include "graphics.h"
+#include "timesync.h"
+#include "buttons.h"
 
 typedef enum {
 	WIFI_RX_EVENT,
@@ -46,5 +48,7 @@ int wifi_getRxFrameCount();
 int wifi_getTxByteCount();
 
 void wifi_dumpParsedFramesToLog();
+
+void wifi_sendDriveInput(button_events_t button_event);
 
 #endif /* WIFI_H_ */

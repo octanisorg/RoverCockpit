@@ -9,17 +9,8 @@
 #include "soundeff.h"
 #include "timesync.h"
 #include "spi.h"
+#include "states.h"
 
-
-typedef enum {
-	ARMED_STATE,
-	DISARMED_STATE,
-	CONNECT_WIFI_STATE,
-	DISCONNECTED_STATE
-} main_states_t;
-
-
-//changes the state based on button/touchscreen events
 void handle_button_events(button_events_t button_events, main_states_t * state){
   switch(button_events)
     {
@@ -27,23 +18,27 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
       if(*state == DISARMED_STATE){
 	*state = ARMED_STATE;
 	soundeff_stateArmed();
+	button_touch_update(BUTTON_ARM_EVENT);
       }else if(*state == ARMED_STATE){
 	*state = DISARMED_STATE;
 	soundeff_stateDisarmed();
+	button_touch_update(BUTTON_ARM_EVENT);
       }
-
       break;
-
+    
     case BUTTON_WIFI_CONNECT_EVENT:
       if(*state == DISCONNECTED_STATE){
 	*state = CONNECT_WIFI_STATE;
+	button_touch_update(BUTTON_WIFI_CONNECT_EVENT);
       }else if(*state == ARMED_STATE || *state == DISARMED_STATE){
 	*state = DISCONNECTED_STATE;
+	button_touch_update(BUTTON_WIFI_CONNECT_EVENT);
       }
       break;
 
     case BUTTON_SAVE_EVENT:
       if(*state == ARMED_STATE || *state == DISARMED_STATE){
+	button_touch_update(BUTTON_SAVE_EVENT);
 	wifi_dumpParsedFramesToLog();
 	soundeff_wifiFramesSaved();
       }
@@ -53,11 +48,13 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
     case BUTTON_R_EVENT:
     case BUTTON_U_EVENT:
     case BUTTON_D_EVENT:
-
       if(*state == ARMED_STATE){
-	wifi_sendData((uint8 *)button_events, 1);
-      }
+	
+	wifi_sendDriveInput(button_events);
 
+	graphics_draw_arrows(button_events);
+
+      }
       break;
 
     case BUTTON_NO_EVENT:
@@ -89,37 +86,31 @@ int main(void) {
       graphics_updateHUD();
     }
 
+    switch(state)
+      {
+      case ARMED_STATE:
+	graphics_printDebug("ARMED");
+	break;
 
-    switch(state) {
-    case ARMED_STATE:
-      graphics_printDebug("ARMED");
-      break;
+      case DISARMED_STATE:
+	graphics_printDebug("DISARMED");
+	break;
 
-    case DISARMED_STATE:
-      //TODO: graphics_sub_arrow(button_events)
-      graphics_printDebug("DISARMED");
-      break;
-
-
-
-    case DISCONNECTED_STATE:
-      //TODO: graphics_sub_arrow(button_events)
-      graphics_printDebug("DISCONNECTED");
-      graphics_printDebug_SUB("DISCONNECTED",1);
-      wifi_disconnect();
-      graphics_hud_setWifiStatus(0);
-      break;
-
-
-    case CONNECT_WIFI_STATE:
-      //search for rover and connect, otherwise block!
-      graphics_printDebug("CONNECTING");
-      wifi_init();
-      wifi_openSocket();
-      soundeff_wifiConnected();
-      state = DISARMED_STATE;
-      break;
-    }
+      case DISCONNECTED_STATE:
+	graphics_printDebug("DISCONNECTED");
+	wifi_disconnect();
+	graphics_hud_setWifiStatus(0);
+	break;
+ 
+      case CONNECT_WIFI_STATE:
+	//search for rover and connect, otherwise block!
+	graphics_printDebug("CONNECTING");
+	wifi_init();
+	wifi_openSocket();
+	soundeff_wifiConnected();
+	state = DISARMED_STATE;
+	break;
+      }
 
   }
   return 0;
