@@ -19,6 +19,11 @@
 
 #define CRITICAL_BATTERY_VOLTAGE 3.4
 
+#define DEG_FS 32767
+#define MAX_DEG 360
+#define MAP_WIDTHPX 256
+#define MAP_HEIGHTPX 256
+
 #define NEXTLINE 32
 #define POWER_IN NEXTLINE + 1
 #define POWER_OUT (POWER_IN + 3*NEXTLINE)
@@ -38,13 +43,13 @@
 #define HEADING (13*NEXTLINE + 18)
 #define DEBUGMSG 4*NEXTLINE + 9
 #define FIRTST_BUT_POS 7*NEXTLINE +19
+#define TOTAL_TILE_NUMBER 1024
 
 #define DEG_UNIT_CHAR 248
 #define HECTOPASCAL_UNIT_CHAR 135
 #define METERPERSEC_UNIT_CHAR 255
 #define ARROW_UP_CHAR 24
 #define ARROW_DOWN_CHAR 25
-  
 
 #define ARROW_CENTER 12*NEXTLINE+9
 #define RHOMBUS 4
@@ -54,18 +59,19 @@
 #define ARROW_DOWN 31
 #define ARROW_RIGHT 16
 #define ARROW_LEFT 17
-
-
+#define LIMIT_Y 11
+#define LIMIT_X 8
+#define BLACK_TILE 0
 
 #define NDSCONN 19*NEXTLINE + 27
-
 #define BATTERY 15*NEXTLINE + 27
 #define HEALTH 11*NEXTLINE + 27
-
 
 #define WHITE_OFFSET 256
 #define RED_OFFSET 2*256
 #define GREEN_OFFSET 3*256
+
+
 
 hudData_t hudData;
 u16 * map = BG_MAP_RAM(26);
@@ -74,7 +80,6 @@ u16 * compassSprite;
 
 int arrow_x_length=0;
 int arrow_y_length=0;
-
 
 
 void graphics_printChar(int index, u16 c){
@@ -214,8 +219,7 @@ void graphics_mainInit(){
 
   //clear map of main screen
   int i;
-  for(i=0; i<1024; i++) map[i] = 0;
-
+  for(i=0; i<TOTAL_TILE_NUMBER; i++) map[i] = 0;
 
   //setup compass
   graphics_compassInit();
@@ -256,9 +260,10 @@ void graphics_subInit(){
   swiCopy(CGA8x8thickTiles,BG_TILE_RAM_SUB(2), CGA8x8thickTilesLen/2);
   swiCopy(BackgroundMap, BG_MAP_RAM_SUB(0), BackgroundMapLen/2);
 
+
   //clear map of sub screen
   int i;
-  for(i=0; i<1024; i++) map_SUB[i] = 0;
+  for(i=0; i<TOTAL_TILE_NUMBER; i++) map_SUB[i] = 0;
 
   //initialise the touchscreen button states and text
   button_touch_init();
@@ -279,11 +284,13 @@ void graphics_printFloat(int index, float f, char unit, char * format){
   graphics_print(index, word);
 }
 
+
 void graphics_printDebug(char * word){
   int i;
   for(i=0; i<24; i++) map[DEBUGMSG + i] = 0; //clear line;
   graphics_print(DEBUGMSG, word);
 }
+
 
 void graphics_printDebug_SUB(char * word, int button){
   if (0<= button && button<3){
@@ -294,6 +301,7 @@ void graphics_printDebug_SUB(char * word, int button){
     graphics_print_SUB(position,word);
   }
 }
+
 
 void graphics_printDebug2(char * word){
   int i;
@@ -323,7 +331,6 @@ void graphics_updateHUD(){
   graphics_printFloat(POWER_OUT, hudData.power_out, 'W', "%05.02f");
   graphics_printFloat(BATTERY, hudData.battery, 'V', "%02.2f");
   graphics_printFloat(HEALTH, hudData.health, '%', "%02.0f");
-
   graphics_printFloat(HEADING, hudData.heading,  DEG_UNIT_CHAR, "%03.0f");
 
   //update rx/tx frames
@@ -332,77 +339,79 @@ void graphics_updateHUD(){
 
 
   //rotate compass
-  float dalpha = (32767)/360;
+  float dalpha = (DEG_FS)/MAX_DEG;
   float alpha = hudData.heading*dalpha;
-  oamRotateScale(&oamMain, 1, alpha, 256,256);
+  oamRotateScale(&oamMain, 1, alpha, MAP_WIDTHPX,MAP_HEIGHTPX);
   oamUpdate(&oamMain);
 
   //emit warning sounds
   if(hudData.battery <= CRITICAL_BATTERY_VOLTAGE) soundeff_batteryLow();
 }
 
+
+
 void graphics_draw_arrows(button_events_t button_event){
 
-	switch(button_event){
-	case BUTTON_L_EVENT:
-		if(arrow_x_length>-8){
-			arrow_x_length--;
-			if(arrow_x_length<0){
-				map_SUB[ARROW_CENTER+arrow_x_length+1]=HORIZONTAL_LINE+RED_OFFSET;
-				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_LEFT+RED_OFFSET;
-			}else if(arrow_x_length>0){
-				map_SUB[ARROW_CENTER+arrow_x_length+1]=0;
-				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_RIGHT+RED_OFFSET;
-			}else if(arrow_x_length==0){
-				map_SUB[ARROW_CENTER+arrow_x_length+1]=0;
-			}
-		}
-		break;
-	case BUTTON_R_EVENT:
-		if(arrow_x_length<8){
-			arrow_x_length++;
-			if(arrow_x_length<0){
-				map_SUB[ARROW_CENTER+arrow_x_length-1]=0;
-				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_LEFT+RED_OFFSET;
-			}else if(arrow_x_length>0){
-				map_SUB[ARROW_CENTER+arrow_x_length-1]=HORIZONTAL_LINE+RED_OFFSET;
-				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_RIGHT+RED_OFFSET;
-			}else if(arrow_x_length==0){
-				map_SUB[ARROW_CENTER+arrow_x_length-1]=0;
-			}
-		}
-		break;
-	case BUTTON_U_EVENT:
-		if(arrow_y_length<11){
-			arrow_y_length++;
-			if(arrow_y_length>0){
-				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
-				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_UP+RED_OFFSET;
-			}
-			else if(arrow_y_length<0){
-				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=0;
-				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
-			}else if(arrow_y_length==0){
-				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=0;
-			}
-		}
-		break;
-	case BUTTON_D_EVENT:
-		//if(arrow_y_length>-11){
-			arrow_y_length--;
-			if(arrow_y_length>0){
-				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
-				map_SUB[ARROW_CENTER-(arrow_y_length*NEXTLINE)]=ARROW_UP+RED_OFFSET;
-			}
-			else if(arrow_y_length<0){
-				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
-				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
-			}else if(arrow_y_length==0){
-				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
-			}
-		//}
-	default: break;
-	}
+  switch(button_event){
+  case BUTTON_L_EVENT:
+    if(arrow_x_length>-LIMIT_X){
+      arrow_x_length--;
+      if(arrow_x_length<0){
+	map_SUB[ARROW_CENTER+arrow_x_length+1]=HORIZONTAL_LINE+RED_OFFSET;
+	map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_LEFT+RED_OFFSET;
+      }else if(arrow_x_length>0){
+	map_SUB[ARROW_CENTER+arrow_x_length+1]=0;
+	map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_RIGHT+RED_OFFSET;
+      }else if(arrow_x_length==0){
+	map_SUB[ARROW_CENTER+arrow_x_length+1]=0;
+      }
+    }
+    break;
+  case BUTTON_R_EVENT:
+    if(arrow_x_length<LIMIT_X){
+      arrow_x_length++;
+      if(arrow_x_length<0){
+	map_SUB[ARROW_CENTER+arrow_x_length-1]=0;
+	map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_LEFT+RED_OFFSET;
+      }else if(arrow_x_length>0){
+	map_SUB[ARROW_CENTER+arrow_x_length-1]=HORIZONTAL_LINE+RED_OFFSET;
+	map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_RIGHT+RED_OFFSET;
+      }else if(arrow_x_length==0){
+	map_SUB[ARROW_CENTER+arrow_x_length-1]=0;
+      }
+    }
+    break;
+  case BUTTON_U_EVENT:
+    if(arrow_y_length<LIMIT_Y){
+      arrow_y_length++;
+      if(arrow_y_length>0){
+	map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
+	map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_UP+RED_OFFSET;
+      }
+      else if(arrow_y_length<0){
+	map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=BLACK_TILE;
+	map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
+      }else if(arrow_y_length==0){
+	map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=BLACK_TILE;
+      }
+    }
+    break;
+  case BUTTON_D_EVENT:
+    if(arrow_y_length>-LIMIT_Y){
+      arrow_y_length--;
+      if(arrow_y_length>0){
+	map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=BLACK_TILE;
+	map_SUB[ARROW_CENTER-(arrow_y_length*NEXTLINE)]=ARROW_UP+RED_OFFSET;
+      }
+      else if(arrow_y_length<0){
+	map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
+	map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
+      }else if(arrow_y_length==0){
+	map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=BLACK_TILE;
+      }
+    }
+  default: break;
+  }
 
-	map_SUB[ARROW_CENTER]=RHOMBUS+RED_OFFSET;
+  map_SUB[ARROW_CENTER]=RHOMBUS+RED_OFFSET;
 }
