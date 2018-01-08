@@ -18,7 +18,10 @@
 #include "buttons.h"
 
 
-
+#define DEG_FS 32767
+#define MAX_DEG 360
+#define MAP_WIDTHPX 256
+#define MAP_HEIGHTPX 256
 #define NEXTLINE 32
 #define POWER_IN NEXTLINE + 1
 #define POWER_OUT (POWER_IN + 3*NEXTLINE)
@@ -38,6 +41,7 @@
 #define HEADING (13*NEXTLINE + 18)
 #define DEBUGMSG 4*NEXTLINE + 9
 #define FIRTST_BUT_POS 7*NEXTLINE +19
+#define TOTAL_TILE_NUMBER 1024
 
 #define ARROW_CENTER 12*NEXTLINE+9
 #define RHOMBUS 4
@@ -47,6 +51,10 @@
 #define ARROW_DOWN 31
 #define ARROW_RIGHT 16
 #define ARROW_LEFT 17
+#define LIMIT_Y 11
+#define LIMIT_X 8
+#define BLACK_TILE 0
+
 
 
 
@@ -208,7 +216,7 @@ void graphics_mainInit(){
 
 	//clear map of main screen
 	int i;
-	for(i=0; i<1024; i++) map[i] = 0;
+	for(i=0; i<TOTAL_TILE_NUMBER; i++) map[i] = 0;
 
 
 	//setup compass
@@ -252,7 +260,7 @@ void graphics_subInit(){
 
 	//clear map of sub screen
 	int i;
-	for(i=0; i<1024; i++) map_SUB[i] = 0;
+	for(i=0; i<TOTAL_TILE_NUMBER; i++) map_SUB[i] = 0;
 
 	//initialise the touchscreen button states and text
 	button_touch_init();
@@ -325,13 +333,11 @@ void graphics_updateHUD(){
 	graphics_printFloat(NDSCONN + 2*NEXTLINE, 8,24, "%3.0f");
 
 
-
-
-
 	//rotate compass
-	float dalpha = (32767)/360;
+
+	float dalpha = (DEG_FS)/MAX_DEG;
 	float alpha = hudData.heading*dalpha;
-	oamRotateScale(&oamMain, 1, alpha, 256,256);
+	oamRotateScale(&oamMain, 1, alpha, MAP_WIDTHPX,MAP_HEIGHTPX);
 	oamUpdate(&oamMain);
 
 	//emit warning sounds
@@ -342,7 +348,7 @@ void graphics_draw_arrows(button_events_t button_event){
 
 	switch(button_event){
 	case BUTTON_L_EVENT:
-		if(arrow_x_length>-8){
+		if(arrow_x_length>-LIMIT_X){
 			arrow_x_length--;
 			if(arrow_x_length<0){
 				map_SUB[ARROW_CENTER+arrow_x_length+1]=HORIZONTAL_LINE+RED_OFFSET;
@@ -356,7 +362,7 @@ void graphics_draw_arrows(button_events_t button_event){
 		}
 		break;
 	case BUTTON_R_EVENT:
-		if(arrow_x_length<8){
+		if(arrow_x_length<LIMIT_X){
 			arrow_x_length++;
 			if(arrow_x_length<0){
 				map_SUB[ARROW_CENTER+arrow_x_length-1]=0;
@@ -370,32 +376,32 @@ void graphics_draw_arrows(button_events_t button_event){
 		}
 		break;
 	case BUTTON_U_EVENT:
-		if(arrow_y_length<11){
+		if(arrow_y_length<LIMIT_Y){
 			arrow_y_length++;
 			if(arrow_y_length>0){
 				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
 				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_UP+RED_OFFSET;
 			}
 			else if(arrow_y_length<0){
-				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=0;
+				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=BLACK_TILE;
 				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
 			}else if(arrow_y_length==0){
-				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=0;
+				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=BLACK_TILE;
 			}
 		}
 		break;
 	case BUTTON_D_EVENT:
-		if(arrow_y_length>-11){
+		if(arrow_y_length>-LIMIT_Y){
 			arrow_y_length--;
 			if(arrow_y_length>0){
-				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
+				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=BLACK_TILE;
 				map_SUB[ARROW_CENTER-(arrow_y_length*NEXTLINE)]=ARROW_UP+RED_OFFSET;
 			}
 			else if(arrow_y_length<0){
 				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
 				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
 			}else if(arrow_y_length==0){
-				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
+				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=BLACK_TILE;
 			}
 		}
 	default: break;

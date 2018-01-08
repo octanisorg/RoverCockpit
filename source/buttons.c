@@ -10,6 +10,17 @@
 #include "states.h"
 #include "graphics.h"
 
+#define BUTTONS_LEFT_LIMIT 144
+#define BUTTONS_RIGHT_LIMIT 240
+#define FIRST_BUTTON_TOP_LIMIT 48
+#define BUTTON_WITH 3*8
+#define FIRST_BUTTON_BOTTOM_LIMIT FIRST_BUTTON_TOP_LIMIT+BUTTON_WITH
+#define NEXT_BUTTON_OFSET 5*8
+#define SECOND_BUTTON_TOP_LIMIT FIRST_BUTTON_TOP_LIMIT+NEXT_BUTTON_OFSET
+#define SECOND_BUTTON_BOTTOM_LIMIT SECOND_BUTTON_TOP_LIMIT+BUTTON_WITH
+#define THIRD_BUTTON_TOP_LIMIT SECOND_BUTTON_TOP_LIMIT+NEXT_BUTTON_OFSET
+#define THIRD_BUTTON_BOTTOM_LIMIT THIRD_BUTTON_TOP_LIMIT+BUTTON_WITH
+
 button1_sub_state button1_state;
 button2_sub_state button2_state;
 button3_sub_state button3_state;
@@ -45,16 +56,15 @@ button_events_t button_listener(){
 
 }
 
-
 touch_button button_touchscreen_identify(touchPosition * touch){
 
-	if(144<touch->px && touch->px<240 && 48<touch->py && touch->py<80){
+	if(BUTTONS_LEFT_LIMIT<touch->px && touch->px<BUTTONS_RIGHT_LIMIT && FIRST_BUTTON_TOP_LIMIT<touch->py && touch->py<FIRST_BUTTON_BOTTOM_LIMIT){
 		return TOUCH_BUTTON1;
 	}
-	else if(144<touch->px && touch->px<240 && 88<touch->py && touch->py<120){
+	else if(BUTTONS_LEFT_LIMIT<touch->px && touch->px<BUTTONS_RIGHT_LIMIT && SECOND_BUTTON_TOP_LIMIT<touch->py && touch->py<SECOND_BUTTON_BOTTOM_LIMIT){
 		return TOUCH_BUTTON2;
 	}
-	else if(144<touch->px &&touch->px<240 && 128<touch->py && touch->py<160){
+	else if(BUTTONS_LEFT_LIMIT<touch->px &&touch->px<BUTTONS_RIGHT_LIMIT && THIRD_BUTTON_TOP_LIMIT<touch->py && touch->py<THIRD_BUTTON_BOTTOM_LIMIT){
 		return TOUCH_BUTTON3;
 	}
 	else{
