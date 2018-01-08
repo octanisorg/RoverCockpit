@@ -35,6 +35,7 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 				button_touch_update(BUTTON_WIFI_CONNECT_EVENT);
 			}else if(*state == ARMED_STATE || *state == DISARMED_STATE){
 				*state = DISCONNECTED_STATE;
+				button_touch_update(BUTTON_WIFI_CONNECT_EVENT);
 			}
 		break;
 
@@ -116,7 +117,6 @@ int main(void) {
 				wifi_init();
 				wifi_openSocket();
 				soundeff_wifiConnected();
-				graphics_printDebug_SUB("CONNECTED", 1);
 				state = DISARMED_STATE;
 			break;
 		}
