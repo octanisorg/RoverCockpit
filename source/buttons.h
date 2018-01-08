@@ -46,7 +46,7 @@ typedef enum {
 
 typedef enum {
 	SAVE_TOUCH_BUTTON_STATE,
-	SAVING_TOUCH_BUTTON_STATE
+	//SAVING_TOUCH_BUTTON_STATE
 } button3_sub_state;
 
 button_events_t button_listener();

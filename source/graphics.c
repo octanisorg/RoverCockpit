@@ -65,6 +65,9 @@ u16 * map = BG_MAP_RAM(26);
 u16 * map_SUB = BG_MAP_RAM_SUB(26);
 u16 * compassSprite;
 
+int arrow_x_length=0;
+int arrow_y_length=0;
+
 
 
 void graphics_printChar(int index, u16 c){
@@ -213,23 +216,23 @@ void graphics_mainInit(){
 
 	//Position
 	oamSet(&oamMain, 	// oam handler
-		0,				// Number of sprite
-		124,120,			// Coordinates
-		1,				// Priority
-		0,				// Palette to use
-		SpriteSize_64x64,			// Sprite size
-		SpriteColorFormat_256Color,	// Color format
-		compassSprite,			// Loaded graphic to display
-		1,				// Affine rotation to use (-1 none)
-		false,			// Double size if rotating
-		false,			// Hide this sprite
-		false, false,	// Horizontal or vertical flip
-		false			// Mosaic
-		);
+			0,				// Number of sprite
+			124,120,			// Coordinates
+			1,				// Priority
+			0,				// Palette to use
+			SpriteSize_64x64,			// Sprite size
+			SpriteColorFormat_256Color,	// Color format
+			compassSprite,			// Loaded graphic to display
+			1,				// Affine rotation to use (-1 none)
+			false,			// Double size if rotating
+			false,			// Hide this sprite
+			false, false,	// Horizontal or vertical flip
+			false			// Mosaic
+	);
 
 
-		//Update the sprites
-		oamUpdate(&oamMain);
+	//Update the sprites
+	oamUpdate(&oamMain);
 
 }
 
@@ -243,12 +246,12 @@ void graphics_subInit(){
 
 
 	swiCopy(BackgroundTiles,BG_TILE_RAM_SUB(1), BackgroundTilesLen/2);
-    swiCopy(CGA8x8thickPal, BG_PALETTE_SUB, CGA8x8thickPalLen/2);
-    swiCopy(CGA8x8thickTiles,BG_TILE_RAM_SUB(2), CGA8x8thickTilesLen/2);
-    swiCopy(BackgroundMap, BG_MAP_RAM_SUB(0), BackgroundMapLen/2);
+	swiCopy(CGA8x8thickPal, BG_PALETTE_SUB, CGA8x8thickPalLen/2);
+	swiCopy(CGA8x8thickTiles,BG_TILE_RAM_SUB(2), CGA8x8thickTilesLen/2);
+	swiCopy(BackgroundMap, BG_MAP_RAM_SUB(0), BackgroundMapLen/2);
 
 	//clear map of sub screen
-    int i;
+	int i;
 	for(i=0; i<1024; i++) map_SUB[i] = 0;
 
 	//initialise the touchscreen button states and text
@@ -274,7 +277,7 @@ void graphics_printDebug(char * word){
 	int i;
 	for(i=0; i<24; i++) map[DEBUGMSG + i] = 0; //clear line;
 	graphics_print(DEBUGMSG, word);
-	}
+}
 
 void graphics_printDebug_SUB(char * word, int button){
 	if (0<= button && button<3){
@@ -335,38 +338,69 @@ void graphics_updateHUD(){
 	if(hudData.battery <= 3.4) soundeff_batteryLow();
 }
 
-void graphics_draw_arrows(int length_x,int length_y){
-	int i;
+void graphics_draw_arrows(button_events_t button_event){
+
+	switch(button_event){
+	case BUTTON_L_EVENT:
+		if(arrow_x_length>-8){
+			arrow_x_length--;
+			if(arrow_x_length<0){
+				map_SUB[ARROW_CENTER+arrow_x_length+1]=HORIZONTAL_LINE+RED_OFFSET;
+				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_LEFT+RED_OFFSET;
+			}else if(arrow_x_length>0){
+				map_SUB[ARROW_CENTER+arrow_x_length+1]=0;
+				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_RIGHT+RED_OFFSET;
+			}else if(arrow_x_length==0){
+				map_SUB[ARROW_CENTER+arrow_x_length+1]=0;
+			}
+		}
+		break;
+	case BUTTON_R_EVENT:
+		if(arrow_x_length<8){
+			arrow_x_length++;
+			if(arrow_x_length<0){
+				map_SUB[ARROW_CENTER+arrow_x_length-1]=0;
+				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_LEFT+RED_OFFSET;
+			}else if(arrow_x_length>0){
+				map_SUB[ARROW_CENTER+arrow_x_length-1]=HORIZONTAL_LINE+RED_OFFSET;
+				map_SUB[ARROW_CENTER+arrow_x_length]=ARROW_RIGHT+RED_OFFSET;
+			}else if(arrow_x_length==0){
+				map_SUB[ARROW_CENTER+arrow_x_length-1]=0;
+			}
+		}
+		break;
+	case BUTTON_U_EVENT:
+		if(arrow_y_length<11){
+			arrow_y_length++;
+			if(arrow_y_length>0){
+				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
+				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_UP+RED_OFFSET;
+			}
+			else if(arrow_y_length<0){
+				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=0;
+				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
+			}else if(arrow_y_length==0){
+				map_SUB[ARROW_CENTER-(arrow_y_length-1)*NEXTLINE]=0;
+			}
+		}
+		break;
+	case BUTTON_D_EVENT:
+		if(arrow_y_length>-11){
+			arrow_y_length--;
+			if(arrow_y_length>0){
+				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
+				map_SUB[ARROW_CENTER-(arrow_y_length*NEXTLINE)]=ARROW_UP+RED_OFFSET;
+			}
+			else if(arrow_y_length<0){
+				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
+				map_SUB[ARROW_CENTER-arrow_y_length*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
+			}else if(arrow_y_length==0){
+				map_SUB[ARROW_CENTER-(arrow_y_length+1)*NEXTLINE]=0;
+			}
+		}
+	default: break;
+	}
+
 	map_SUB[ARROW_CENTER]=RHOMBUS+RED_OFFSET;
-
-
-	if(length_x>0){
-		for(i=1;i<length_x;i++){
-			map_SUB[ARROW_CENTER+i]=HORIZONTAL_LINE+RED_OFFSET;
-			}
-		map_SUB[ARROW_CENTER+i]=ARROW_RIGHT+RED_OFFSET;
-	}
-	else if(length_x<0){
-		for(i=1;i<(-length_x);i++){
-					map_SUB[ARROW_CENTER-i]=HORIZONTAL_LINE+RED_OFFSET;
-					}
-		map_SUB[ARROW_CENTER-i]=ARROW_LEFT+RED_OFFSET;
-	}
-
-
-	if(length_y>0){
-		for(i=1;i<length_y;i++){
-			map_SUB[ARROW_CENTER-i*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
-			}
-		map_SUB[ARROW_CENTER-i*NEXTLINE]=ARROW_UP+RED_OFFSET;
-	}
-	else if(length_y<0){
-		for(i=1;i<(-length_y);i++){
-					map_SUB[ARROW_CENTER+i*NEXTLINE]=VERTICAL_LINE+RED_OFFSET;
-					}
-		map_SUB[ARROW_CENTER+i*NEXTLINE]=ARROW_DOWN+RED_OFFSET;
-	}
-
-
 }
 

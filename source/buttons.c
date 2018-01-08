@@ -18,11 +18,9 @@ button3_sub_state button3_state;
 button_events_t button_listener(){
 	scanKeys();
 	unsigned down = keysDown();
-	unsigned held = keysHeld();
 
 	if(down & KEY_TOUCH){
 		return button_touch_event_analyse();
-		//TODO: distinguish between sub buttons and fire event
 	}else if(down & KEY_START){
 		return BUTTON_WIFI_CONNECT_EVENT;
 	}else if(down & KEY_A){
@@ -32,13 +30,13 @@ button_events_t button_listener(){
 	}
 
 
-	if(held & KEY_DOWN){
+	if(down & KEY_DOWN){
 		return BUTTON_D_EVENT;
-	}else if(held & KEY_UP){
+	}else if(down & KEY_UP){
 		return BUTTON_U_EVENT;
-	}else if(held & KEY_LEFT){
+	}else if(down & KEY_LEFT){
 		return BUTTON_L_EVENT;
-	}else if(held & KEY_RIGHT){
+	}else if(down & KEY_RIGHT){
 		return BUTTON_R_EVENT;
 	}else{
 		return BUTTON_NO_EVENT;
@@ -70,29 +68,14 @@ button_events_t button_touch_event_analyse(){
 	touchRead(&touch);
 	touch_button pressed_touch_button = button_touchscreen_identify(&touch); //Reads which button on the touch screen is pressed
 
-
 	switch(pressed_touch_button){
 	case TOUCH_BUTTON1:
-		switch(button1_state){
-		case ARM_TOUCH_BUTTON_STATE:
-			return BUTTON_ARM_EVENT;
-		case DISARM_TOUCH_BUTTON_STATE:
-			return BUTTON_NO_EVENT;
-		}
-		case TOUCH_BUTTON2:
-			switch(button2_state){
-			case CONNECT_TOUCH_BUTTON_STATE:
-				return BUTTON_WIFI_CONNECT_EVENT;
-			default: break;
-
-			}
-			case TOUCH_BUTTON3:
-				switch(button3_state){
-				case SAVE_TOUCH_BUTTON_STATE:
-					return BUTTON_SAVE_EVENT;
-				default: break;
-				}
-				default: return BUTTON_NO_EVENT;
+		return BUTTON_ARM_EVENT;
+	case TOUCH_BUTTON2:
+		return BUTTON_WIFI_CONNECT_EVENT;
+	case TOUCH_BUTTON3:
+		return BUTTON_SAVE_EVENT;
+	default: return BUTTON_NO_EVENT;
 	}
 
 }
@@ -118,22 +101,18 @@ void button_touch_update(button_events_t button_events){
 
 	switch(button_events){
 	case BUTTON_ARM_EVENT:
-		button1_state=DISARM_TOUCH_BUTTON_STATE;
+		if(button1_state==ARM_TOUCH_BUTTON_STATE){
+			button1_state=DISARM_TOUCH_BUTTON_STATE;
 		graphics_printDebug_SUB("DISARM", TOUCH_BUTTON1);
+		}else if(button1_state==DISARM_TOUCH_BUTTON_STATE){
+			button1_state=ARM_TOUCH_BUTTON_STATE;
+			graphics_printDebug_SUB("ARM", TOUCH_BUTTON1);
+		}
 		break;
-		/* Adding event???
-	case BUTTON_ARM_EVENT:
-		button=TOUCH_BUTTON1;
-		button1_state=ARM_TOUCH_BUTTON_STATE;
-		graphics_printDebug_SUB("ARM", button);
-		 */
 	case BUTTON_WIFI_CONNECT_EVENT:
 		button2_state=CONNECTING_TOUCH_BUTTON_STATE;
 		graphics_printDebug_SUB("CONNECTING", TOUCH_BUTTON2);
 		break;
-	case BUTTON_SAVE_EVENT:
-		button2_state=SAVING_TOUCH_BUTTON_STATE;
-		graphics_printDebug_SUB("SAVING",TOUCH_BUTTON3);
 	default: break;
 	}
 }

@@ -24,6 +24,7 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 			}else if(*state == ARMED_STATE){
 				*state = DISARMED_STATE;
 				soundeff_stateDisarmed();
+				button_touch_update(BUTTON_ARM_EVENT);
 			}
 
 		break;
@@ -52,6 +53,8 @@ void handle_button_events(button_events_t button_events, main_states_t * state){
 
 			if(*state == ARMED_STATE){
 				wifi_sendData((uint8 *)button_events, 1);
+				graphics_draw_arrows(button_events);
+
 			}
 
 		break;
@@ -71,7 +74,7 @@ int main(void) {
 	graphics_subInit();
 
 
-	main_states_t state = DISARMED_STATE;
+	main_states_t state = DISCONNECTED_STATE;
 	button_events_t button_events;
 	wifi_events_t wifi_events;
 
@@ -97,22 +100,19 @@ int main(void) {
 			break;
 
 			case DISARMED_STATE:
-				//TODO: graphics_sub_arrow(button_events)
 				graphics_printDebug("DISARMED");
-				graphics_draw_arrows(-3,-6);
 			break;
 
 
 			case DISCONNECTED_STATE:
-				//TODO: graphics_sub_arrow(button_events)
-				graphics_printDebug("DISCONNECTED"); ///////////////////////Why calling in loop????
-				graphics_draw_arrows(-3,-6);
+				graphics_printDebug("DISCONNECTED");
 				wifi_disconnect();
 				graphics_hud_setWifiStatus(0);
 			break;
 
 			case CONNECT_WIFI_STATE:
 				//search for rover and connect, otherwise block!
+				graphics_printDebug("CONNECTING");
 				wifi_init();
 				wifi_openSocket();
 				soundeff_wifiConnected();
