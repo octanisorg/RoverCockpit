@@ -101,12 +101,15 @@ int main(void) {
       break;
 
 
+
     case DISCONNECTED_STATE:
       //TODO: graphics_sub_arrow(button_events)
       graphics_printDebug("DISCONNECTED");
+      graphics_printDebug_SUB("DISCONNECTED",1);
       wifi_disconnect();
       graphics_hud_setWifiStatus(0);
       break;
+
 
     case CONNECT_WIFI_STATE:
       //search for rover and connect, otherwise block!

@@ -15,8 +15,15 @@
 #define LOCAL_PORT 4210
 #define OUT_PORT 4210
 #define SSID "UDP_to_serial"
+#define SSID_CHANNEL 1
 #define UDP_FRAME_SIZE 64
+//number of 4 byte values in an RX frame
+#define VALUES_IN_FRAME 17 
 
+//CSV dump file, header and format
+#define CSV_FILE "/rxlog.csv"
+#define CSV_HEAD "id,epoch,powerOut,powerIn,gps,sats,hdop,prec,lat,lon,intTemp,extTemp,intHum,extPress,wind,heading,battery,health\n"
+#define CSV_LINEFORMAT "%i,%i,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n"
 
 //Socket i/o configuration
 struct sockaddr_in sa_out, sa_in;
@@ -47,6 +54,7 @@ typedef struct wifiParsedFrame{
 
 uint8 wifiFrameRx[UDP_FRAME_SIZE];
 int frames_received = 0;
+int bytes_sent = 0;
 
 // Flags indicating whether the WiFi or the
 // socket has been initialized
@@ -59,35 +67,58 @@ Wifi_AccessPoint * foundRover;
 //linked list head
 wifiParsedFrame_t * head = NULL;
 
-wifiParsedFrame_t * wifi_addToList(wifiParsedFrame_t * frame, wifiParsedFrame_t * next){
+void wifi_addToList(wifiParsedFrame_t * frame){
   wifiParsedFrame_t* new_node = (wifiParsedFrame_t*)malloc(sizeof(wifiParsedFrame_t));
-  if(new_node == NULL)
-    {
-      printf("Error creating a new node.\n");
-      exit(0);
-    }
-  new_node = frame;
-  new_node->next = next;
+  if(new_node == NULL) return;
 
-  return new_node;
+  *new_node = *frame;
+  new_node->next = head;
+  head = new_node; 
 }
 
 
 void wifi_dumpParsedFramesToLog(){
+  static int busy = 0;
+  if(busy) return;
 
-  FILE * f = fopen("/rxlog.txt", "w+");
+  busy = 1;
+  FILE * f = fopen(CSV_FILE, "w+");
 
   //iterate through linked list
   wifiParsedFrame_t * node = head;
   int i = 0;
-  while(i<3){
-    fprintf(f, "e: %i", node->epoch);
-    swiWaitForVBlank();
+
+
+  
+  fprintf(f, CSV_HEAD);
+  while(i<frames_received){
+    fprintf(f,  CSV_LINEFORMAT,
+	    i,
+	    node->epoch,
+	    node->powerOut,     
+	    node->powerIn,      
+	    node->gps,     
+	    node->sats, 
+	    node->hdop, 
+	    node->prec, 
+	    node->lat,  
+	    node->lon,       
+	    node->intTemp,      
+	    node->extTemp,     
+	    node->intHum,  
+	    node->extPress,    
+	    node->wind,   
+	    node->heading,      
+	    node->battery,      
+	    node->health
+	    );
+
     node = node->next;
     i++;
   }
 
   fclose(f);
+  busy = 0;
 }
 
 
@@ -103,8 +134,8 @@ int wifi_init(){
   foundRover = malloc(sizeof(Wifi_AccessPoint));
 
   strcpy(desiredRover->ssid, SSID);
-  desiredRover->ssid_len = 13;
-  desiredRover->channel = 1;
+  desiredRover->ssid_len = strlen(SSID);
+  desiredRover->channel = SSID_CHANNEL;
 
 
   Wifi_InitDefault(false);
@@ -199,6 +230,8 @@ int wifi_sendData(uint8* data_buff, int bytes){
 		(struct sockaddr *)&sa_in,	//Output side of the socket
 		sizeof(sa_in));				//Size of the structure
 
+  bytes_sent += bytes;
+  
   //Return always true
   return 1;
 }
@@ -231,49 +264,72 @@ int wifi_receiveData(uint8* data_buff, int bytes)
 
 
 void wifi_parseFrame(){
-  int32 values[17];
+  
+  int32 values[VALUES_IN_FRAME];
 
   int i,j,k;
   k=0;
-  for(i=0; i<17; i++){
+  for(i=0; i<VALUES_IN_FRAME; i++){
 
     values[i]=0;
-    for(j=0; j<4; j++){
+    //assemble one value using 4 consecutive RX bytes from wifi
+    for(j=0; j<sizeof(int32); j++){
       values[i] += wifiFrameRx[j+k] << 8*j;
     }
     k=k+4;
   }
 
-  //add frame to linked list
-  wifiParsedFrame_t * frame;
-  frame->epoch = (uint32)values[16];
+  //initialise frame
+  wifiParsedFrame_t frame;
+  frame.epoch = (uint32)values[16];
+  frame.battery = (float)values[15]/1000;
+  frame.powerOut = (float)values[0]/1000;
+  frame.powerIn = (float)values[1]/1000;
+  frame.gps  = (float)values[2];
+  frame.sats = (float)values[3];
+  frame.hdop = (float)values[4];
+  frame.prec = (float)values[5];
+  frame.lat = (float)values[6]/1e7;
+  frame.lon = (float)values[7]/1e7;
+  frame.intTemp = (float)values[8]/100;
+  frame.extTemp = (float)values[9]/100;
+  frame.intHum = (float)values[10]/100;
+  frame.extPress = (float)values[11];
+  frame.wind = (float)values[12];
+  frame.heading = (float)values[13]/100;
+  frame.battery = (float)values[15]/1000;
+  frame.health = (float)values[14];
+  frame.next = NULL;
 
-  head = wifi_addToList(frame, head);
+  //copy frame to linked list
+  wifi_addToList(&frame);
 
-  graphics_hud_setPowerOut((float)values[0]/1000);
-  graphics_hud_setPowerIn((float)values[1]/1000);
-  graphics_hud_setGPS((float)values[2]);
-  graphics_hud_setSats((float)values[3]);
-  graphics_hud_setHdop((float)values[4]);
-  graphics_hud_setPrec((float)values[5]);
-  graphics_hud_setLat((float)values[6]/1e7);
-  graphics_hud_setLon((float)values[7]/1e7);
-  graphics_hud_setIntTemp((float)values[8]/100);
-  graphics_hud_setExtTemp((float)values[9]/100);
-  graphics_hud_setIntHum((float)values[10]/100);
-  graphics_hud_setExtPress((float)values[11]);
-  graphics_hud_setWind((float)values[12]);
-  graphics_hud_setHeading((float)values[13]/100);
-  graphics_hud_setBattery((float)values[15]/1000);
-  graphics_hud_setHealth((float)values[14]);
+  //set corresponding UI elements
+  graphics_hud_setPowerOut(frame.powerOut);
+  graphics_hud_setPowerIn(frame.powerIn);
+  graphics_hud_setGPS(frame.gps);
+  graphics_hud_setSats(frame.sats);
+  graphics_hud_setHdop(frame.hdop);
+  graphics_hud_setPrec(frame.prec);
+  graphics_hud_setLat(frame.lat);
+  graphics_hud_setLon(frame.lon);
+  graphics_hud_setIntTemp(frame.intTemp);
+  graphics_hud_setExtTemp(frame.extTemp);
+  graphics_hud_setIntHum(frame.intHum);
+  graphics_hud_setExtPress(frame.extPress);
+  graphics_hud_setWind(frame.wind);
+  graphics_hud_setHeading(frame.heading);
+  graphics_hud_setBattery(frame.battery);
+  graphics_hud_setHealth(frame.health);
 
+  //sync NDS time to rover time
   timesync_setEpoch((uint32)values[16]);
 
 }
 
 wifi_events_t wifi_listener(){
-  int bytesRx = wifi_receiveData(wifiFrameRx,68);
-  if(bytesRx == 68){
+  int bytesRx = wifi_receiveData(wifiFrameRx,VALUES_IN_FRAME*sizeof(int32));
+  if(bytesRx == VALUES_IN_FRAME*sizeof(int32)){
     wifi_parseFrame();
     frames_received++;
     return WIFI_FRAMERX_EVENT;
@@ -284,6 +340,10 @@ wifi_events_t wifi_listener(){
 
 int wifi_getRxFrameCount(){
   return frames_received;
+}
+
+int wifi_getTxByteCount(){
+  return bytes_sent;
 }
 
 void wifi_disconnect(){

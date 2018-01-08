@@ -51,6 +51,7 @@ void graphics_hud_setHealth(float f);
 void graphics_hud_setIntHum(float f);
 
 void graphics_printDebug(char * word);
+void graphics_printDebug_SUB(char * word, int button);
 void graphics_printDebug2(char * word);
 
 void graphics_hud_setWifiStatus(int status);

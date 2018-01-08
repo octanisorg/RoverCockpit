@@ -43,6 +43,8 @@ wifi_events_t wifi_listener();
 
 int wifi_getRxFrameCount();
 
+int wifi_getTxByteCount();
+
 void wifi_dumpParsedFramesToLog();
 
 #endif /* WIFI_H_ */
